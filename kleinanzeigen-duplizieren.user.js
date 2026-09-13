@@ -757,8 +757,15 @@
         document.querySelectorAll('img').forEach(function (img) {
             const src = img.src || img.getAttribute('data-src') || '';
             if (src && src.indexOf('img.kleinanzeigen.de') >= 0 && src.indexOf('/prod-ads/images/') >= 0) {
-                // Auf groesste Variante normalisieren (rule=$_57.JPG = full size)
-                const url = src.replace(/[?&]rule=\$_\d+\.[A-Z]+/i, '?rule=$_57.JPG');
+                // Auf groesste Variante normalisieren (rule=$_57.JPG = full size).
+                // Die gesamte Query wird ersetzt, nicht nur ein vorhandenes
+                // rule=: Die Bearbeiten-Seite liefert Vorschaubilder als
+                // ?AccessKeyId=...&jwt=..., wobei das signierte jwt die Groesse
+                // auf 96x96 festlegt. Ohne rule= griff die alte Ersetzung nicht,
+                // und der Snapshot enthielt nur diese Vorschauen. Die Bild-ID im
+                // Pfad liefert mit rule=$_57.JPG ohne jwt die volle Aufloesung.
+                const q = src.indexOf('?');
+                const url = (q >= 0 ? src.slice(0, q) : src) + '?rule=$_57.JPG';
                 urls.add(url);
             }
         });

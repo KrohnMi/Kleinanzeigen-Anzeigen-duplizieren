@@ -91,6 +91,27 @@ describe('collectImageUrls', () => {
         ]);
     });
 
+    it('ersetzt signierte Vorschau-URLs (AccessKeyId/jwt) durch die volle Aufloesung', () => {
+        // So liefert die Bearbeiten-Seite die Bilder: kein rule=, die Groesse
+        // (96x96) steckt im signierten jwt.
+        document.body.innerHTML = `
+            <img src="https://img.kleinanzeigen.de/api/v1/prod-ads/images/3c/3cdecb54-1676?AccessKeyId=9773b07374e7bdc3&jwt=eyJ0eXAi.abc.def">
+        `;
+        expect(collectImageUrls()).toEqual([
+            'https://img.kleinanzeigen.de/api/v1/prod-ads/images/3c/3cdecb54-1676?rule=$_57.JPG'
+        ]);
+    });
+
+    it('dedupliziert Vorschau und Normalbild desselben Bildes', () => {
+        document.body.innerHTML = `
+            <img src="https://img.kleinanzeigen.de/api/v1/prod-ads/images/3c/abc?AccessKeyId=k&jwt=t1">
+            <img src="https://img.kleinanzeigen.de/api/v1/prod-ads/images/3c/abc?rule=$_59.AUTO">
+        `;
+        expect(collectImageUrls()).toEqual([
+            'https://img.kleinanzeigen.de/api/v1/prod-ads/images/3c/abc?rule=$_57.JPG'
+        ]);
+    });
+
     it('ignoriert Bilder von fremden Hosts', () => {
         document.body.innerHTML = `
             <img src="https://example.com/api/v1/prod-ads/images/yy?rule=$_2.JPG">
