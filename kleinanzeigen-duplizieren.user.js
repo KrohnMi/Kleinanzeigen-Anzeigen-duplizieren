@@ -765,8 +765,13 @@
         return Array.from(urls);
     }
 
+    // Ohne Cookies: img.kleinanzeigen.de antwortet mit
+    // `Access-Control-Allow-Origin: *` und ohne `Access-Control-Allow-Credentials`.
+    // Eine Anfrage mit `credentials: 'omit'` verwirft der Browser deshalb
+    // (CORS), und jedes Bild landete nur als URL-Platzhalter im Snapshot. Der
+    // Zugang steht ohnehin in der URL (AccessKeyId/jwt bzw. oeffentliches Bild).
     async function fetchAsBlob(url) {
-        const res = await fetch(url, { credentials: 'include' });
+        const res = await fetch(url, { credentials: 'omit' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return await res.blob();
     }
@@ -1154,7 +1159,7 @@
     if (typeof module !== 'undefined' && module.exports &&
         typeof process !== 'undefined' && process.versions && process.versions.node) {
         module.exports = {
-            CONFIG, getExponentialBackoffWait, readFormFields, getAdFormRoot, collectImageUrls,
+            CONFIG, getExponentialBackoffWait, readFormFields, getAdFormRoot, collectImageUrls, fetchAsBlob,
             injectSiteAdBlockerStyles,
             handleConfirmationPage,
             awaitFormReady,
