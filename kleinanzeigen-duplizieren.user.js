@@ -767,7 +767,7 @@
 
     // Ohne Cookies: img.kleinanzeigen.de antwortet mit
     // `Access-Control-Allow-Origin: *` und ohne `Access-Control-Allow-Credentials`.
-    // Eine Anfrage mit `credentials: 'omit'` verwirft der Browser deshalb
+    // Eine Anfrage mit `credentials: 'include'` verwirft der Browser deshalb
     // (CORS), und jedes Bild landete nur als URL-Platzhalter im Snapshot. Der
     // Zugang steht ohnehin in der URL (AccessKeyId/jwt bzw. oeffentliches Bild).
     async function fetchAsBlob(url) {
