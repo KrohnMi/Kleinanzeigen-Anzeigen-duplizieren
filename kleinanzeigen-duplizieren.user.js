@@ -757,16 +757,28 @@
         document.querySelectorAll('img').forEach(function (img) {
             const src = img.src || img.getAttribute('data-src') || '';
             if (src && src.indexOf('img.kleinanzeigen.de') >= 0 && src.indexOf('/prod-ads/images/') >= 0) {
-                // Auf groesste Variante normalisieren (rule=$_57.JPG = full size)
-                const url = src.replace(/[?&]rule=\$_\d+\.[A-Z]+/i, '?rule=$_57.JPG');
+                // Auf groesste Variante normalisieren (rule=$_57.JPG = full size).
+                // Die gesamte Query wird ersetzt, nicht nur ein vorhandenes
+                // rule=: Die Bearbeiten-Seite liefert Vorschaubilder als
+                // ?AccessKeyId=...&jwt=..., wobei das signierte jwt die Groesse
+                // auf 96x96 festlegt. Ohne rule= griff die alte Ersetzung nicht,
+                // und der Snapshot enthielt nur diese Vorschauen. Die Bild-ID im
+                // Pfad liefert mit rule=$_57.JPG ohne jwt die volle Aufloesung.
+                const q = src.indexOf('?');
+                const url = (q >= 0 ? src.slice(0, q) : src) + '?rule=$_57.JPG';
                 urls.add(url);
             }
         });
         return Array.from(urls);
     }
 
+    // Ohne Cookies: img.kleinanzeigen.de antwortet mit
+    // `Access-Control-Allow-Origin: *` und ohne `Access-Control-Allow-Credentials`.
+    // Eine Anfrage mit `credentials: 'include'` verwirft der Browser deshalb
+    // (CORS), und jedes Bild landete nur als URL-Platzhalter im Snapshot. Der
+    // Zugang steht ohnehin in der URL (AccessKeyId/jwt bzw. oeffentliches Bild).
     async function fetchAsBlob(url) {
-        const res = await fetch(url, { credentials: 'include' });
+        const res = await fetch(url, { credentials: 'omit' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return await res.blob();
     }
@@ -1159,7 +1171,7 @@
     if (typeof module !== 'undefined' && module.exports &&
         typeof process !== 'undefined' && process.versions && process.versions.node) {
         module.exports = {
-            CONFIG, getExponentialBackoffWait, readFormFields, getAdFormRoot, collectImageUrls,
+            CONFIG, getExponentialBackoffWait, readFormFields, getAdFormRoot, collectImageUrls, fetchAsBlob,
             injectSiteAdBlockerStyles,
             handleConfirmationPage,
             awaitFormReady,
